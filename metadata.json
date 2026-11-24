@@ -1,0 +1,6 @@
+{
+  "name": "Semillero de Ingeniería USB Cali",
+  "description": "Portal institucional y repositorio de investigación del Semillero de Ingeniería de la Universidad de San Buenaventura Cali y LIDIS, con catálogo de proyectos, calendario académico, perfiles y portal de miembros.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
