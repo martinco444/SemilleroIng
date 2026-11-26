@@ -22,6 +22,8 @@ import { NewsSection } from './components/NewsSection';
 import { Footer } from './components/Footer';
 import { LoginModal } from './components/LoginModal';
 import { MemberPortalModal } from './components/MemberPortalModal';
+import { NewProjectModal } from './components/NewProjectModal';
+import { AccountSecurityModal } from './components/AccountSecurityModal';
 import { ContactJoinModal } from './components/ContactJoinModal';
 import { DirectorApprovalModal } from './components/DirectorApprovalModal';
 
@@ -43,6 +45,8 @@ export default function App() {
   // Modal open states
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [portalModalOpen, setPortalModalOpen] = useState(false);
+  const [newProjectModalOpen, setNewProjectModalOpen] = useState(false);
+  const [securityModalOpen, setSecurityModalOpen] = useState(false);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [directorModalOpen, setDirectorModalOpen] = useState(false);
 
@@ -92,6 +96,8 @@ export default function App() {
     setApprovedUsers([]);
     setContactMessages([]);
     setPortalModalOpen(false);
+    setNewProjectModalOpen(false);
+    setSecurityModalOpen(false);
     setDirectorModalOpen(false);
   };
 
@@ -318,6 +324,7 @@ export default function App() {
         onOpenLogin={() => setLoginModalOpen(true)}
         onLogout={handleLogout}
         onOpenPortal={() => setPortalModalOpen(true)}
+        onOpenSecurity={() => setSecurityModalOpen(true)}
         onOpenJoinModal={() => setJoinModalOpen(true)}
         pendingRequestsCount={pendingRequestsCount}
         onOpenDirectorPanel={handleOpenDirectorPanel}
@@ -338,7 +345,7 @@ export default function App() {
           activePresidentName={activePresidentName}
           onOpenNewProjectModal={() => {
             if (currentUser) {
-              setPortalModalOpen(true);
+              setNewProjectModalOpen(true);
             } else {
               setLoginModalOpen(true);
             }
@@ -386,21 +393,33 @@ export default function App() {
       />
 
       {currentUser && (
-        <MemberPortalModal
-          isOpen={portalModalOpen}
-          onClose={() => setPortalModalOpen(false)}
-          currentUser={currentUser}
-          activePresidentName={activePresidentName}
-          projects={projects}
-          researchLogs={researchLogs}
-          onAddResearchLog={handleAddResearchLog}
-          onAddNewProject={handleAddNewProject}
-          onAddNewEvent={handleAddNewEvent}
-          onAddNewArticle={handleAddNewArticle}
-          onOpenDirectorPanel={handleOpenDirectorPanel}
-          onChangePassword={handleChangePassword}
-          pendingRequestsCount={pendingRequestsCount}
-        />
+        <>
+          <MemberPortalModal
+            isOpen={portalModalOpen}
+            onClose={() => setPortalModalOpen(false)}
+            currentUser={currentUser}
+            activePresidentName={activePresidentName}
+            projects={projects}
+            researchLogs={researchLogs}
+            onAddResearchLog={handleAddResearchLog}
+            onAddNewProject={handleAddNewProject}
+            onOpenDirectorPanel={handleOpenDirectorPanel}
+            pendingRequestsCount={pendingRequestsCount}
+          />
+          <NewProjectModal
+            isOpen={newProjectModalOpen}
+            onClose={() => setNewProjectModalOpen(false)}
+            currentUser={currentUser}
+            activePresidentName={activePresidentName}
+            onAddNewProject={handleAddNewProject}
+          />
+          <AccountSecurityModal
+            isOpen={securityModalOpen}
+            onClose={() => setSecurityModalOpen(false)}
+            currentUser={currentUser}
+            onChangePassword={handleChangePassword}
+          />
+        </>
       )}
 
       {/* Director Approval Panel - Exclusive for Dr. Iván Mauricio Cabezas */}

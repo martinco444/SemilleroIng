@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AuthUser } from '../types';
-import { Menu, X, User as UserIcon, LogOut, LayoutDashboard, Bell, Shield } from 'lucide-react';
+import { Menu, X, User as UserIcon, LogOut, LayoutDashboard, Bell, Shield, KeyRound } from 'lucide-react';
 
 interface HeaderProps {
   currentUser: AuthUser | null;
   onOpenLogin: () => void;
   onLogout: () => void;
   onOpenPortal: () => void;
+  onOpenSecurity: () => void;
   onOpenJoinModal: () => void;
   pendingRequestsCount?: number;
   onOpenDirectorPanel?: () => void;
@@ -17,12 +18,32 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenLogin,
   onLogout,
   onOpenPortal,
+  onOpenSecurity,
   onOpenJoinModal,
   pendingRequestsCount = 0,
   onOpenDirectorPanel
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!userDropdownOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setUserDropdownOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setUserDropdownOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [userDropdownOpen]);
 
   const isDirector = currentUser?.email === 'imcabezas@usbcali.edu.co' || currentUser?.role === 'Docente Director';
 
@@ -111,7 +132,7 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           {currentUser ? (
-            <div className="relative">
+            <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                 className="flex items-center gap-2 p-1.5 pl-2.5 pr-3 rounded-lg border border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer text-left"
@@ -170,6 +191,16 @@ export const Header: React.FC<HeaderProps> = ({
                   >
                     <LayoutDashboard className="w-3.5 h-3.5 text-[#0F2D59]" />
                     Portal de Investigación
+                  </button>
+                  <button
+                    onClick={() => {
+                      setUserDropdownOpen(false);
+                      onOpenSecurity();
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer font-medium border-b border-slate-100"
+                  >
+                    <KeyRound className="w-3.5 h-3.5 text-[#0F2D59]" />
+                    Seguridad y Contraseña
                   </button>
                   <button
                     onClick={() => {
@@ -277,6 +308,16 @@ export const Header: React.FC<HeaderProps> = ({
                 className="w-full text-center px-4 py-2 text-xs font-semibold text-white bg-[#0F2D59] rounded-lg"
               >
                 Abrir Portal de Investigación
+              </button>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenSecurity();
+                }}
+                className="w-full text-center px-4 py-2 text-xs font-semibold text-[#0F2D59] bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center gap-1.5"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                <span>Seguridad y Contraseña</span>
               </button>
               <button
                 onClick={() => {

@@ -1432,7 +1432,7 @@ async function startServer() {
     }
     if (email === 'imcabezas@usbcali.edu.co') {
       res.status(400).json({
-        error: 'Para cambiar tu propia contraseña de Director, utiliza la pestaña Seguridad en tu portal.',
+        error: 'Para cambiar tu propia contraseña de Director, haz clic en tu nombre en la barra superior y entra a Seguridad y Contraseña.',
       });
       return;
     }

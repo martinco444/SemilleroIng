@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { AuthUser, Project, ResearchLog, ResearchLine, ProjectStatus, CalendarEvent, NewsArticle, EventType } from '../types';
-import { X, Clock, Plus, BookOpen, CheckCircle2, Shield, FileText, Send, User, Calendar, Newspaper, UserPlus, Sparkles, KeyRound, AlertCircle } from 'lucide-react';
+import { AuthUser, Project, ResearchLog, ResearchLine, ProjectStatus } from '../types';
+import { X, Clock, Plus, CheckCircle2, Shield, UserPlus } from 'lucide-react';
 
 interface MemberPortalModalProps {
   isOpen: boolean;
@@ -11,10 +11,7 @@ interface MemberPortalModalProps {
   researchLogs: ResearchLog[];
   onAddResearchLog: (log: ResearchLog) => void;
   onAddNewProject: (project: Project) => void;
-  onAddNewEvent?: (event: CalendarEvent) => void;
-  onAddNewArticle?: (article: NewsArticle) => void;
   onOpenDirectorPanel?: () => void;
-  onChangePassword?: (currentPassword: string, newPassword: string) => Promise<string>;
   pendingRequestsCount?: number;
   onAddActiveTestMember?: () => void;
   onQuickApprovePending?: () => void;
@@ -29,15 +26,12 @@ export const MemberPortalModal: React.FC<MemberPortalModalProps> = ({
   researchLogs,
   onAddResearchLog,
   onAddNewProject,
-  onAddNewEvent,
-  onAddNewArticle,
   onOpenDirectorPanel,
-  onChangePassword,
   pendingRequestsCount = 0,
   onAddActiveTestMember,
   onQuickApprovePending
 }) => {
-  const [activeTab, setActiveTab] = useState<'logs' | 'new-project' | 'new-event' | 'new-news' | 'security'>('logs');
+  const [activeTab, setActiveTab] = useState<'logs' | 'new-project'>('logs');
 
   // Form states for adding research log
   const [logProjectId, setLogProjectId] = useState<string>(projects[0]?.id || '');
@@ -45,21 +39,6 @@ export const MemberPortalModal: React.FC<MemberPortalModalProps> = ({
   const [logSummary, setLogSummary] = useState('');
   const [logDeliverable, setLogDeliverable] = useState('');
   const [logSuccess, setLogSuccess] = useState(false);
-
-  // Form states for event
-  const [eventTitle, setEventTitle] = useState('');
-  const [eventType, setEventType] = useState<EventType>('Reunión Semanal');
-  const [eventDate, setEventDate] = useState('');
-  const [eventTime, setEventTime] = useState('10:00 - 12:00');
-  const [eventLocation, setEventLocation] = useState('Campus La Umbría (USB Cali) / Teams');
-  const [eventDesc, setEventDesc] = useState('');
-  const [eventSuccess, setEventSuccess] = useState(false);
-
-  // Form states for news
-  const [newsTitle, setNewsTitle] = useState('');
-  const [newsCategory, setNewsCategory] = useState<'Convocatoria' | 'Logro Académico' | 'Evento' | 'Publicación Científica'>('Convocatoria');
-  const [newsSummary, setNewsSummary] = useState('');
-  const [newsSuccess, setNewsSuccess] = useState(false);
 
   // Form states for new project
   const [newTitle, setNewTitle] = useState('');
@@ -77,14 +56,6 @@ export const MemberPortalModal: React.FC<MemberPortalModalProps> = ({
   const [newGithub, setNewGithub] = useState('');
   const [newDockerized, setNewDockerized] = useState(true);
   const [projectSuccess, setProjectSuccess] = useState(false);
-
-  // Form states for password change
-  const [currentPwd, setCurrentPwd] = useState('');
-  const [nextPwd, setNextPwd] = useState('');
-  const [confirmNextPwd, setConfirmNextPwd] = useState('');
-  const [pwdError, setPwdError] = useState('');
-  const [pwdSuccess, setPwdSuccess] = useState('');
-  const [isUpdatingPwd, setIsUpdatingPwd] = useState(false);
 
   if (!isOpen) return null;
 
@@ -168,93 +139,6 @@ export const MemberPortalModal: React.FC<MemberPortalModalProps> = ({
       setNewGithub('');
       setActiveTab('logs');
     }, 2000);
-  };
-
-  const handleCreateEvent = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!eventTitle || !eventDate || !onAddNewEvent) return;
-
-    const event: CalendarEvent = {
-      id: `evt-${Date.now()}`,
-      title: eventTitle,
-      type: eventType,
-      date: eventDate,
-      time: eventTime,
-      location: eventLocation,
-      mode: 'Híbrido',
-      speaker: currentUser.role === 'Presidente del Semillero'
-        ? `${currentUser.name} & Dr. Iván Mauricio Cabezas`
-        : activePresidentName
-          ? `Dr. Iván Mauricio Cabezas & ${activePresidentName}`
-          : 'Dr. Iván Mauricio Cabezas',
-      description: eventDesc || 'Encuentro del Semillero de Ingeniería USB Cali.',
-      registrationOpen: true
-    };
-
-    onAddNewEvent(event);
-    setEventSuccess(true);
-    setTimeout(() => {
-      setEventSuccess(false);
-      setEventTitle('');
-      setEventDate('');
-      setEventDesc('');
-      setActiveTab('logs');
-    }, 2000);
-  };
-
-  const handleCreateNews = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newsTitle || !newsSummary || !onAddNewArticle) return;
-
-    const article: NewsArticle = {
-      id: `news-${Date.now()}`,
-      title: newsTitle,
-      date: new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' }),
-      category: newsCategory,
-      summary: newsSummary,
-      content: [newsSummary],
-      author: currentUser.name,
-      readTime: '2 min de lectura',
-      tags: ['Semillero', 'USB Cali']
-    };
-
-    onAddNewArticle(article);
-    setNewsSuccess(true);
-    setTimeout(() => {
-      setNewsSuccess(false);
-      setNewsTitle('');
-      setNewsSummary('');
-      setActiveTab('logs');
-    }, 2000);
-  };
-
-  const handlePasswordChangeSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!onChangePassword) return;
-    setPwdError('');
-    setPwdSuccess('');
-
-    if (nextPwd.length < 6) {
-      setPwdError('La nueva contraseña debe tener al menos 6 caracteres.');
-      return;
-    }
-    if (nextPwd !== confirmNextPwd) {
-      setPwdError('La confirmación de la nueva contraseña no coincide.');
-      return;
-    }
-
-    setIsUpdatingPwd(true);
-    try {
-      const msg = await onChangePassword(currentPwd, nextPwd);
-      setPwdSuccess(msg || 'Contraseña actualizada correctamente.');
-      setCurrentPwd('');
-      setNextPwd('');
-      setConfirmNextPwd('');
-    } catch (err) {
-      setPwdError(err instanceof Error ? err.message : 'No se pudo actualizar la contraseña.');
-    } finally {
-      setIsUpdatingPwd(false);
-    }
   };
 
   return (
@@ -364,48 +248,6 @@ export const MemberPortalModal: React.FC<MemberPortalModalProps> = ({
             <Plus className="w-4 h-4" />
             <span>Registrar Proyecto</span>
           </button>
-
-          <button
-            onClick={() => setActiveTab('new-event')}
-            className={`flex-1 py-3 px-2 text-center transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
-              activeTab === 'new-event'
-                ? 'bg-white text-[#0F2D59] border-b-2 border-[#0F2D59]'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <Calendar className="w-4 h-4" />
-            <span>Programar Evento</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('new-news')}
-            className={`flex-1 py-3 px-2 text-center transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
-              activeTab === 'new-news'
-                ? 'bg-white text-[#0F2D59] border-b-2 border-[#0F2D59]'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <Newspaper className="w-4 h-4" />
-            <span>Publicar Noticia</span>
-          </button>
-
-          {onChangePassword && (
-            <button
-              onClick={() => {
-                setActiveTab('security');
-                setPwdError('');
-                setPwdSuccess('');
-              }}
-              className={`flex-1 py-3 px-2 text-center transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
-                activeTab === 'security'
-                  ? 'bg-white text-[#0F2D59] border-b-2 border-[#0F2D59]'
-                  : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              <KeyRound className="w-4 h-4" />
-              <span>Seguridad</span>
-            </button>
-          )}
         </div>
 
         {/* Tab Contents */}
@@ -709,272 +551,6 @@ export const MemberPortalModal: React.FC<MemberPortalModalProps> = ({
                     className="px-5 py-2 text-xs font-semibold text-white bg-[#0F2D59] hover:bg-[#1E3A8A] rounded-lg transition-colors cursor-pointer"
                   >
                     Publicar Proyecto
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* TAB 3: PROGRAMAR EVENTO */}
-          {activeTab === 'new-event' && (
-            <div className="space-y-4">
-              <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-200 text-xs text-[#0F2D59]">
-                Como miembro activo puedes programar sesiones académicas, talleres o reuniones en el calendario institucional del semillero.
-              </div>
-
-              {eventSuccess && (
-                <div className="p-3 bg-emerald-50 text-emerald-800 rounded-lg border border-emerald-200 text-xs font-semibold flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  ¡Evento programado exitosamente en el calendario!
-                </div>
-              )}
-
-              <form onSubmit={handleCreateEvent} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Título del Evento *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={eventTitle}
-                    onChange={e => setEventTitle(e.target.value)}
-                    placeholder="Ej. Taller Práctico: Introducción a Modelos de Lenguaje"
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0F2D59]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Tipo de Evento
-                    </label>
-                    <select
-                      value={eventType}
-                      onChange={e => setEventType(e.target.value as EventType)}
-                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0F2D59]"
-                    >
-                      <option value="Reunión Semanal">Reunión Semanal</option>
-                      <option value="Taller Técnico">Taller Técnico</option>
-                      <option value="Sustentación">Sustentación</option>
-                      <option value="Seminario LIDIS">Seminario Académico</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Fecha del Evento *
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      value={eventDate}
-                      onChange={e => setEventDate(e.target.value)}
-                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0F2D59]"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Horario
-                    </label>
-                    <input
-                      type="text"
-                      value={eventTime}
-                      onChange={e => setEventTime(e.target.value)}
-                      placeholder="10:00 - 12:00"
-                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0F2D59]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Lugar o Enlace
-                    </label>
-                    <input
-                      type="text"
-                      value={eventLocation}
-                      onChange={e => setEventLocation(e.target.value)}
-                      placeholder="Campus La Umbría / Teams"
-                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0F2D59]"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Descripción del Evento
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={eventDesc}
-                    onChange={e => setEventDesc(e.target.value)}
-                    placeholder="Temas de la sesión, objetivos y requerimientos para los asistentes..."
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0F2D59]"
-                  />
-                </div>
-
-                <div className="pt-2 flex justify-end">
-                  <button
-                    type="submit"
-                    className="px-5 py-2 text-xs font-semibold text-white bg-[#0F2D59] hover:bg-[#1E3A8A] rounded-lg transition-colors cursor-pointer"
-                  >
-                    Guardar Evento en Calendario
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* TAB 4: PUBLICAR NOTICIA */}
-          {activeTab === 'new-news' && (
-            <div className="space-y-4">
-              <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-200 text-xs text-[#0F2D59]">
-                Publica acuerdos, convocatorias o comunicados oficiales en la sección de noticias del semillero.
-              </div>
-
-              {newsSuccess && (
-                <div className="p-3 bg-emerald-50 text-emerald-800 rounded-lg border border-emerald-200 text-xs font-semibold flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  ¡Noticia publicada exitosamente en el portal!
-                </div>
-              )}
-
-              <form onSubmit={handleCreateNews} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Título de la Noticia *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newsTitle}
-                    onChange={e => setNewsTitle(e.target.value)}
-                    placeholder="Ej. Convocatoria Semestral de Vinculación 2026"
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0F2D59]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Categoría
-                  </label>
-                  <select
-                    value={newsCategory}
-                    onChange={e => setNewsCategory(e.target.value as any)}
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0F2D59]"
-                  >
-                    <option value="Convocatoria">Convocatoria</option>
-                    <option value="Logro Académico">Logro Académico</option>
-                    <option value="Evento">Evento</option>
-                    <option value="Publicación Científica">Publicación Científica</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Contenido / Comunicado *
-                  </label>
-                  <textarea
-                    required
-                    rows={4}
-                    value={newsSummary}
-                    onChange={e => setNewsSummary(e.target.value)}
-                    placeholder="Escribe el texto del comunicado oficial..."
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0F2D59]"
-                  />
-                </div>
-
-                <div className="pt-2 flex justify-end">
-                  <button
-                    type="submit"
-                    className="px-5 py-2 text-xs font-semibold text-white bg-[#0F2D59] hover:bg-[#1E3A8A] rounded-lg transition-colors cursor-pointer"
-                  >
-                    Publicar Comunicado
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* TAB 5: SEGURIDAD / CAMBIO DE CONTRASEÑA */}
-          {activeTab === 'security' && onChangePassword && (
-            <div className="space-y-4 max-w-lg mx-auto">
-              <div className="p-3.5 bg-blue-50/70 rounded-xl border border-blue-200 text-xs text-[#0F2D59] flex items-start gap-2.5">
-                <KeyRound className="w-4 h-4 text-[#0F2D59] shrink-0 mt-0.5" />
-                <div>
-                  <strong>Rotación segura de contraseña:</strong> Al actualizar tu contraseña, cualquier sesión abierta previamente en otro navegador quedará cerrada automáticamente.
-                </div>
-              </div>
-
-              {pwdError && (
-                <div className="p-3 bg-rose-50 text-rose-700 rounded-lg border border-rose-200 text-xs flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                  <span>{pwdError}</span>
-                </div>
-              )}
-
-              {pwdSuccess && (
-                <div className="p-3 bg-emerald-50 text-emerald-800 rounded-lg border border-emerald-200 text-xs font-semibold flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span>{pwdSuccess}</span>
-                </div>
-              )}
-
-              <form onSubmit={handlePasswordChangeSubmit} className="space-y-3.5">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Contraseña Actual *
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={currentPwd}
-                    onChange={(e) => setCurrentPwd(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0F2D59]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Nueva Contraseña (mínimo 6 caracteres) *
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    value={nextPwd}
-                    onChange={(e) => setNextPwd(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0F2D59]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Confirmar Nueva Contraseña *
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    value={confirmNextPwd}
-                    onChange={(e) => setConfirmNextPwd(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0F2D59]"
-                  />
-                </div>
-
-                <div className="pt-2 flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={isUpdatingPwd}
-                    className="px-5 py-2 text-xs font-semibold text-white bg-[#0F2D59] hover:bg-[#1E3A8A] disabled:opacity-60 rounded-lg transition-colors cursor-pointer"
-                  >
-                    {isUpdatingPwd ? 'Actualizando...' : 'Actualizar Contraseña'}
                   </button>
                 </div>
               </form>
