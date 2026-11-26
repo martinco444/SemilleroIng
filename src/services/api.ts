@@ -59,6 +59,14 @@ export class ApiError extends Error {
   }
 }
 
+function resolveApiUrl(url: string): string {
+  if (/^https?:\/\//i.test(url)) return url;
+  const normalized = url.replace(/^\/+/, '');
+  const cleanPath = window.location.pathname.replace(/\/index\.html$/i, '');
+  const basePath = cleanPath.endsWith('/') ? cleanPath : `${cleanPath}/`;
+  return `${basePath}${normalized}`;
+}
+
 async function apiRequest<T>(
   url: string,
   options: {
@@ -75,7 +83,7 @@ async function apiRequest<T>(
     headers['Authorization'] = `Bearer ${options.token}`;
   }
 
-  const res = await fetch(url, {
+  const res = await fetch(resolveApiUrl(url), {
     method: options.method ?? 'GET',
     headers,
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,

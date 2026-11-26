@@ -2,7 +2,6 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'node:path';
 import fs from 'node:fs';
-import { createServer as createViteServer } from 'vite';
 import {
   db,
   listMembers,
@@ -174,6 +173,7 @@ function buildAuthPayload(user: ReturnType<typeof mapUserRow>) {
 
 async function startServer() {
   const app = express();
+  app.set('trust proxy', 1);
   app.disable('x-powered-by');
   app.use(securityHeaders);
   app.use(express.json({ limit: '1mb' }));
@@ -223,7 +223,12 @@ async function startServer() {
 
   // Health check
   app.get('/api/health', (_req, res) => {
-    res.json({ ok: true, database: 'sqlite' });
+    try {
+      db.prepare('SELECT 1').get();
+      res.json({ ok: true, database: 'sqlite' });
+    } catch {
+      res.status(503).json({ ok: false, database: 'sqlite' });
+    }
   });
 
   // Initial public + optional authenticated state bootstrap
@@ -1469,6 +1474,7 @@ async function startServer() {
   const isProd = process.env.NODE_ENV === 'production' && fs.existsSync(path.join(distDir, 'index.html'));
 
   if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
@@ -1481,9 +1487,34 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Semillero USB Cali server running on http://0.0.0.0:${PORT} (SQLite active)`);
   });
+
+  let isShuttingDown = false;
+  const shutdown = (signal: string) => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+    console.log(`Received ${signal}. Closing HTTP server and SQLite database...`);
+
+    const forceExitTimer = setTimeout(() => {
+      console.error('Forced shutdown after timeout.');
+      process.exit(1);
+    }, 10_000);
+    forceExitTimer.unref();
+
+    server.close(() => {
+      try {
+        db.close();
+      } catch (err) {
+        console.error('Error closing SQLite database:', err);
+      }
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 startServer().catch((err) => {
